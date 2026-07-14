@@ -6,8 +6,7 @@ final class SideMenuViewController: UIViewController {
 
     private let viewModel: SideMenuViewModel
     private var tableView: UITableView!
-    private var dataSource: UITableViewDiffableDataSource<Int, SideMenuItem>!
-
+ 
     // MARK: - Header
 
     private let headerView   = UIView()
@@ -28,8 +27,6 @@ final class SideMenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupDataSource()
-        applySnapshot()
     }
 
     // MARK: - UI
@@ -74,6 +71,7 @@ final class SideMenuViewController: UIViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
+        tableView.dataSource = self
         view.addSubview(tableView)
 
         // ── Logout Button ──────────────────────────────────────────
@@ -119,40 +117,6 @@ final class SideMenuViewController: UIViewController {
         ])
     }
 
-    // MARK: - DataSource
-
-    private func setupDataSource() {
-        dataSource = UITableViewDiffableDataSource<Int, SideMenuItem>(
-            tableView: tableView
-        ) { tableView, indexPath, item in
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-            var config = UIListContentConfiguration.cell()
-            config.text = item.title
-            config.image = UIImage(systemName: item.icon)
-            config.imageProperties.tintColor = .systemIndigo
-            cell.contentConfiguration = config
-            cell.backgroundColor = .clear
-            cell.selectionStyle = .none
-
-            // Highlight indicator
-            let bg = UIView()
-            bg.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.08)
-            bg.layer.cornerRadius = 10
-            cell.selectedBackgroundView = bg
-
-            return cell
-        }
-    }
-
-    private func applySnapshot() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, SideMenuItem>()
-        for (index, section) in viewModel.sections.enumerated() {
-            snapshot.appendSections([index])
-            snapshot.appendItems(section.items)
-        }
-        dataSource.apply(snapshot, animatingDifferences: false)
-    }
-
     // MARK: - Actions
 
     @objc private func logoutTapped() {
@@ -167,13 +131,45 @@ final class SideMenuViewController: UIViewController {
     }
 }
 
-extension SideMenuViewController: UITableViewDelegate {
+extension SideMenuViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        viewModel.sections.count
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        viewModel.sections[section].items.count
+    }
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         viewModel.sections[section].title
     }
-
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let item = viewModel.sections[indexPath.section].items[indexPath.row]
+        // ... configure cell with item.title, item.icon, highlight bg
+        return setupDataSource(item: item, tableView: tableView, indexPath: indexPath)
+    }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        let item = viewModel.sections[indexPath.section].items[indexPath.row]
         viewModel.onSelect?(item)
+    }
+    
+    // MARK: - DataSource
+    
+    private func setupDataSource(item : SideMenuItem, tableView: UITableView, indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        var config = UIListContentConfiguration.cell()
+        config.text = item.title
+        config.image = UIImage(systemName: item.icon)
+        config.imageProperties.tintColor = .systemIndigo
+        cell.contentConfiguration = config
+        cell.backgroundColor = .clear
+        cell.selectionStyle = .none
+        
+        // Highlight indicator
+        let bg = UIView()
+        bg.backgroundColor = UIColor.systemIndigo.withAlphaComponent(0.08)
+        bg.layer.cornerRadius = 10
+        cell.selectedBackgroundView = bg
+        
+        return cell
     }
 }

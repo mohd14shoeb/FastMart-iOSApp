@@ -18,7 +18,7 @@ final class LoginViewModel {
     var onStateChanged: (() -> Void)?
 
     func login() {
-        guard canSubmit else { return }
+      //  guard canSubmit else { return }
         isLoading = true; errorMessage = nil; onStateChanged?()
 
         // Simulated auth — accepts any email with "@" and non-empty password

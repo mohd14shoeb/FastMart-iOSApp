@@ -3,7 +3,7 @@ import UIKit
 // MARK: - Help ViewController (Skeleton)
 
 final class HelpViewController: UIViewController {
-
+    private var viewModel: HelpViewModel?
     private let label = UILabel()
 
     override func viewDidLoad() {

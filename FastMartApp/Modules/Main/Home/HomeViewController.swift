@@ -3,7 +3,7 @@ import UIKit
 // MARK: - Home ViewController (Skeleton)
 
 final class HomeViewController: UIViewController {
-
+   
     private let label = UILabel()
 
     override func viewDidLoad() {
