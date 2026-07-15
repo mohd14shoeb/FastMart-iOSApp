@@ -7,11 +7,11 @@
 import Foundation
 // MARK: - Private: Backend error detail parser
 
-struct FastAPIErrorDetail: Decodable {
-    let detail: FastAPIDetail
+struct ServerAPIError: Decodable {
+    let detail: ServerAPIDetail
 }
 
- enum FastAPIDetail: Decodable {
+ enum ServerAPIDetail: Decodable {
     case string(String)
     case fields([FieldError])
 

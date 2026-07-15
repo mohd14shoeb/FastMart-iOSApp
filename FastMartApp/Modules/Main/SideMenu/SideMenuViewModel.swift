@@ -39,21 +39,29 @@ enum SideMenuItem: CaseIterable {
 // MARK: - SideMenu ViewModel
 
 final class SideMenuViewModel {
-
+    
     struct SideMenuSection {
         let title: String
         let items: [SideMenuItem]
     }
-
+    
     let sections: [SideMenuSection] = [
         SideMenuSection(title: "Navigation", items: [.home, .cart, .services, .help]),
         SideMenuSection(title: "Account",    items: [.profile, .settings]),
         SideMenuSection(title: "Other",      items: [.about]),
     ]
-
-    let userName: String = "Shoeb"
-    let userEmail: String = "shoeb@example.com"
-
+    
+    private let user: User?
+    init(user: User?) {
+        self.user = user
+    }
+    var userName: String {
+        self.user?.name ?? ""
+    }
+    var userEmail: String {
+        self.user?.email ?? ""
+    }
+    
     var onSelect: ((SideMenuItem) -> Void)?
     var onLogout: (() -> Void)?
 }

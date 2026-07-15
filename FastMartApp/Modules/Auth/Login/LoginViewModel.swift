@@ -2,36 +2,61 @@ import Foundation
 
 // MARK: - Login ViewModel
 
+@MainActor
 final class LoginViewModel {
-
-    var email: String = ""
-    var password: String = ""
-    var isLoading: Bool = false
-    var errorMessage: String?
-
-    var canSubmit: Bool {
-        !email.isEmpty && !password.isEmpty && email.contains("@")
+    
+    // MARK: - Dependencies
+    private let authService: AuthServiceProtocol
+    init(authService: AuthServiceProtocol) {
+        self.authService = authService
     }
-
+    
+    var model = LoginModel()
+    
+    var canSubmit: Bool {
+        !model.email.isEmpty && !model.password.isEmpty && model.email.contains("@")
+    }
+    
     var onLoginSuccess: (() -> Void)?
     var onForgotPassword: (() -> Void)?
     var onStateChanged: (() -> Void)?
-
-    func login() {
-      //  guard canSubmit else { return }
-        isLoading = true; errorMessage = nil; onStateChanged?()
-
-        // Simulated auth — accepts any email with "@" and non-empty password
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+    
+    
+    func login()  {
+        guard canSubmit else { return }
+        model.isLoading = true; model.errorMessage = nil; onStateChanged?()
+        Task { [weak self] in
             guard let self else { return }
-            self.isLoading = false
-            UserDefaults.standard.set("skeleton_token", forKey: "auth_token")
-            self.onLoginSuccess?()
+            LoadingIndicator.shared.show(message: "Loading...")
+            
+            do {
+                let loginResponse = try await self.authService.login(
+                    email: self.model.email.lowercased(),
+                    password: self.model.password
+                )
+                loginResponse.dump()
+                
+               self.model.isLoading = false
+                LoadingIndicator.shared.hide()
+                self.onLoginSuccess?()
+            } catch {
+                LoadingIndicator.shared.hide()
+                self.model.isLoading = false
+                self.model.errorMessage = error.localizedDescription
+                self.onStateChanged?()
+            }
         }
     }
-
-    func forgotPasswordTapped() { onForgotPassword?() }
-
-    func update(email: String)    { self.email = email.trimmingCharacters(in: .whitespaces); errorMessage = nil; onStateChanged?() }
-    func update(password: String) { self.password = password; errorMessage = nil; onStateChanged?() }
+    
+    func forgotPasswordTapped() {
+        onForgotPassword?()
+    }
+    
+    func update(email: String)    {
+        self.model.email = email.trimmingCharacters(in: .whitespaces); model.errorMessage = nil; onStateChanged?()
+    }
+    
+    func update(password: String) {
+        self.model.password = password; model.errorMessage = nil; onStateChanged?()
+    }
 }

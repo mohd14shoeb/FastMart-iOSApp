@@ -45,15 +45,17 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
     var childCoordinators: [Coordinator] = []
 
     var onLogout: (() -> Void)?
-
+    
+    private let prefetchedData: DashboardPrefetcher.DashboardData?
     private var tabBarController: UITabBarController?
     private var sideMenuVC: SideMenuViewController?
     private var isSideMenuOpen = false
     private var overlayView: UIView?
     private let sideMenuWidth: CGFloat = 280
 
-    init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController, prefetchedData: DashboardPrefetcher.DashboardData? = nil) {
         self.navigationController = navigationController
+        self.prefetchedData = prefetchedData
     }
 
     func start() {
@@ -63,6 +65,7 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
     // MARK: - Dashboard with Tab Bar + Side Menu
 
     func showDashboard() {
+ 
         let homeNav     = makeNav(HomeViewController(),     icon: TabItem.home.icon,     title: TabItem.home.title)
         let cartNav     = makeNav(CartViewController(),     icon: TabItem.cart.icon,     title: TabItem.cart.title)
         let servicesNav = makeNav(ServicesViewController(), icon: TabItem.services.icon, title: TabItem.services.title)
@@ -76,7 +79,8 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
         self.tabBarController = tabBarController
 
         // ── Side Menu ───────────────────────────────────────────────
-        let sideMenuVM = SideMenuViewModel()
+      
+        let sideMenuVM = SideMenuViewModel(user: prefetchedData?.user)
         sideMenuVM.onSelect = { [weak self] item in
             self?.handleSideMenuItem(item)
         }

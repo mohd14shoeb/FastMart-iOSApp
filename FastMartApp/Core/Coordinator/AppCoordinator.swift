@@ -3,36 +3,42 @@ import UIKit
 // MARK: - App Coordinator (Root)
 
 final class AppCoordinator: Coordinator {
-
+    
     // MARK: - Properties
-
+    
     var navigationController: UINavigationController
     var childCoordinators: [Coordinator] = []
-
+    
     // Global side-menu state so every screen can toggle it
     private var sideMenuController: SideMenuViewController?
-
+    
     // Cache credentials → auto-login next launch
-    private let defaults = UserDefaults.standard
-
+    private let session = SessionStore.shared
     // MARK: - Init
-
+    
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
-
+    
     // MARK: - Start
-
     func start() {
-        if isLoggedIn {
-            showMainFlow()
-        } else {
-            showAuthFlow()
-        }
+        showSplashScreen()
     }
 
+    private func showSplashScreen() {
+        let splashVC = SplashViewController()
+        splashVC.onFinish = { [weak self] in
+            if self?.session.isLoggedIn == true {
+                self?.loadDashboardAndShow()
+            } else {
+                self?.showAuthFlow()
+            }
+        }
+        navigationController.setViewControllers([splashVC], animated: false)
+    }
+    
     // MARK: - Auth Flow
-
+    
     func showAuthFlow() {
         let authCoordinator = AuthCoordinator(
             navigationController: navigationController
@@ -44,12 +50,13 @@ final class AppCoordinator: Coordinator {
         addChild(authCoordinator)
         authCoordinator.start()
     }
-
+    
     // MARK: - Main Flow
-
-    func showMainFlow() {
+    
+    private func showMainFlow(with data: DashboardPrefetcher.DashboardData? = nil) {
         let mainCoordinator = MainCoordinator(
-            navigationController: navigationController
+            navigationController: navigationController,
+            prefetchedData: data
         )
         mainCoordinator.onLogout = { [weak self] in
             self?.removeChild(mainCoordinator)
@@ -58,18 +65,43 @@ final class AppCoordinator: Coordinator {
         }
         addChild(mainCoordinator)
         mainCoordinator.start()
+        
+        LoadingIndicator.shared.hide()
     }
-
+    
+    func showMainFlow() {
+        loadDashboardAndShow()
+    }
+    
     // MARK: - Logout
-
+    
     func logout() {
-        defaults.removeObject(forKey: "auth_token")
+        session.clearAll()
         navigationController.popToRootViewController(animated: false)
     }
-
+    
     // MARK: - Helpers
-
-    private var isLoggedIn: Bool {
-        defaults.string(forKey: "auth_token") != nil
+    
+}
+extension AppCoordinator {
+    // MARK: - Dashboard Loading (blocks until data arrives)
+    
+    private func loadDashboardAndShow() {
+        Task {
+            do {
+                guard let data = try await DashboardPrefetcher().fetchAll() else {
+                    self.showMainFlow(with: nil)
+                    return
+                }
+                await MainActor.run {
+                    self.showMainFlow(with: data)
+                }
+            } catch {
+                await MainActor.run {
+                    LoadingIndicator.shared.hide()
+                    logError("Dashboard pre-fetch failed: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 }

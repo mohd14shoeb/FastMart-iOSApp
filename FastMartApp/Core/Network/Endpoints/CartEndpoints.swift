@@ -29,16 +29,6 @@ extension CartEndpoints: APIEndpoint {
         }
     }
 
-    var body: Data? {
-        switch self {
-        case .addItem(let id, let qty):
-            return try? JSONEncoder().encode(["productId": id, "quantity": qty])
-        case .updateQuantity(_, let qty):
-            return try? JSONEncoder().encode(["quantity": qty])
-        default:
-            return nil
-        }
-    }
 }
 
 // MARK: - Cart Response DTOs

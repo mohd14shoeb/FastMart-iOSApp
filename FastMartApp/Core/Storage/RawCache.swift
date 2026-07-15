@@ -34,7 +34,7 @@ final class RawCache {
     // MARK: - Public API
 
     /// Save any Codable object as raw JSON to disk.
-    func save<T: Encodable>(_ object: T, forKey key: String) {
+    func save<T: Encodable>(_ object: T, forKey key: String) async {
         queue.async { [weak self] in
             guard let self,
                   let data = try? self.encoder.encode(object) else { return }
