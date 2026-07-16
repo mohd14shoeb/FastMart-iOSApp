@@ -2,13 +2,9 @@ import UIKit
 
 // MARK: - App Coordinator (Root)
 
-final class AppCoordinator: Coordinator {
+final class AppCoordinator: BaseCoordinator {
     
     // MARK: - Properties
-    
-    var navigationController: UINavigationController
-    var childCoordinators: [Coordinator] = []
-    
     // Global side-menu state so every screen can toggle it
     private var sideMenuController: SideMenuViewController?
     
@@ -16,12 +12,12 @@ final class AppCoordinator: Coordinator {
     private let session = SessionStore.shared
     // MARK: - Init
     
-    init(navigationController: UINavigationController) {
-        self.navigationController = navigationController
+    override init(navigationController: UINavigationController) {
+        super.init(navigationController: navigationController)
     }
     
     // MARK: - Start
-    func start() {
+    override func start() {
         showSplashScreen()
     }
 

@@ -10,6 +10,35 @@ extension UIViewController {
         animation.values = [-8, 8, -6, 6, -3, 3, 0]
         view.layer.add(animation, forKey: "shake")
     }
+    
+        func addCustomBackButton(
+            title: String = "Back",
+            action: @escaping () -> Void
+        ) {
+            navigationItem.hidesBackButton = true
+
+            let button = UIButton(type: .system)
+
+            var configuration = UIButton.Configuration.plain()
+            configuration.title = title
+            configuration.image = UIImage(
+                systemName: "chevron.backward"
+            )
+            configuration.imagePadding = 4
+            configuration.contentInsets = .zero
+
+            button.configuration = configuration
+
+            button.addAction(
+                UIAction { _ in
+                    action()
+                },
+                for: .touchUpInside
+            )
+
+            navigationItem.leftBarButtonItem =
+                UIBarButtonItem(customView: button)
+        }
 }
 
 // MARK: - UITextField + Password Toggle

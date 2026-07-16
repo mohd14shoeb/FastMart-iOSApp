@@ -1,5 +1,10 @@
 import UIKit
 
+enum sideMenuRoute: Equatable {
+    case setting
+    case profile
+    
+}
 
 // MARK: - Tab Item Enum
 
@@ -39,10 +44,7 @@ enum TabItem: Int, CaseIterable {
 
 // MARK: - Main Coordinator
 
-final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
-
-    var navigationController: UINavigationController
-    var childCoordinators: [Coordinator] = []
+final class MainCoordinator: BaseCoordinator, UITabBarControllerDelegate {
 
     var onLogout: (() -> Void)?
     
@@ -52,13 +54,13 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
     private var isSideMenuOpen = false
     private var overlayView: UIView?
     private let sideMenuWidth: CGFloat = 280
-
+  
     init(navigationController: UINavigationController, prefetchedData: DashboardPrefetcher.DashboardData? = nil) {
-        self.navigationController = navigationController
         self.prefetchedData = prefetchedData
+        super.init(navigationController: navigationController)
     }
 
-    func start() {
+    override func start() {
         showDashboard()
     }
 
@@ -158,9 +160,9 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
         case .help:
             switchToTab(.help)
         case .profile:
-            pushSkeletonScreen(title: "👤 Profile")
+            startProfileFlow(route: .showProfile)
         case .settings:
-            pushSkeletonScreen(title: "⚙️ Settings", supportsTabSwitch: true)
+            self.startSettingsFlow(route: .showSttings)
         case .about:
             pushSkeletonScreen(title: "ℹ️ About", supportsTabSwitch: true)
         }
@@ -279,5 +281,33 @@ final class MainCoordinator: NSObject, Coordinator, UITabBarControllerDelegate {
 extension MainCoordinator {
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
         if isSideMenuOpen { closeSideMenu() }
+    }
+}
+
+extension MainCoordinator {
+
+    private func startProfileFlow(route: ProfileRoute) {
+        guard let selectedNavigationController =
+            tabBarController?.selectedViewController as? UINavigationController else {
+              debugPrint("Selected tab must be a UINavigationController.")
+            
+            return
+        }
+        let userService = UsersService.shared
+        startChild(route: route, on: selectedNavigationController) { [userService] navigationController in
+            ProfileCoordinator(navigationController: navigationController, userService:  userService)
+        }
+    }
+    private func startSettingsFlow(route: SettingsRoute) {
+        guard let selectedNavigationController =
+            tabBarController?.selectedViewController as? UINavigationController else {
+              debugPrint("Selected tab must be a UINavigationController.")
+            
+            return
+        }
+        let userService = UsersService.shared
+        startChild(route: route, on: selectedNavigationController) { [userService] navigationController in
+            SettingsCoordinator(navigationController: navigationController, userService:  userService)
+        }
     }
 }

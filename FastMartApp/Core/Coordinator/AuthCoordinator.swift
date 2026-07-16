@@ -2,24 +2,20 @@ import UIKit
 
 // MARK: - Auth Coordinator
 
-final class AuthCoordinator: Coordinator {
+final class AuthCoordinator: BaseCoordinator {
 
     // MARK: - Properties
-
-    var navigationController: UINavigationController
-    var childCoordinators: [Coordinator] = []
-
     var onLoginSuccess: (() -> Void)?
 
     // MARK: - Init
 
-    init(navigationController: UINavigationController) {
-        self.navigationController = navigationController
+    override init(navigationController: UINavigationController) {
+        super.init(navigationController: navigationController)
     }
 
     // MARK: - Start
 
-    func start() {
+    override func start() {
         showLogin()
     }
 
