@@ -3,11 +3,13 @@ import UIKit
 // MARK: - App Coordinator (Root)
 
 enum MainFlowLaunchContext {
-    case restoredSession // User was already logged in when the app launched.
-    case freshLogin     // User has just completed the login flow.
+    case restoredSession
+    case freshLogin
+    case deepLink
+    case sessionRefreshed
 }
 
-
+@MainActor
 final class AppCoordinator: BaseCoordinator {
     
     // MARK: - Properties
@@ -99,15 +101,11 @@ extension AppCoordinator {
                     self.showMainFlow(with: nil)
                     return
                 }
-                await MainActor.run {
                     LoadingIndicator.shared.hide()
                     self.showMainFlow(with: data)
-                }
             } catch {
-                await MainActor.run {
                     LoadingIndicator.shared.hide()
                     logError("Dashboard pre-fetch failed: \(error.localizedDescription)")
-                }
             }
         }
     }
