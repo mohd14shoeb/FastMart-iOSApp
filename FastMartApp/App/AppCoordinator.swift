@@ -2,6 +2,12 @@ import UIKit
 
 // MARK: - App Coordinator (Root)
 
+enum MainFlowLaunchContext {
+    case restoredSession // User was already logged in when the app launched.
+    case freshLogin     // User has just completed the login flow.
+}
+
+
 final class AppCoordinator: BaseCoordinator {
     
     // MARK: - Properties
@@ -25,7 +31,8 @@ final class AppCoordinator: BaseCoordinator {
         let splashVC = SplashViewController()
         splashVC.onFinish = { [weak self] in
             if self?.session.isLoggedIn == true {
-                self?.loadDashboardAndShow()
+                let user = DashboardPrefetcher().fetchCacheData()
+                self?.showMainFlow(with: user, launchContext: .restoredSession)
             } else {
                 self?.showAuthFlow()
             }
@@ -49,10 +56,10 @@ final class AppCoordinator: BaseCoordinator {
     
     // MARK: - Main Flow
     
-    private func showMainFlow(with data: DashboardPrefetcher.DashboardData? = nil) {
+    private func showMainFlow(with data: DashboardPrefetcher.DashboardData? = nil, launchContext: MainFlowLaunchContext = .freshLogin) {
         let mainCoordinator = MainCoordinator(
             navigationController: navigationController,
-            prefetchedData: data
+            prefetchedData: data, launchContext: launchContext
         )
         mainCoordinator.onLogout = { [weak self] in
             self?.removeChild(mainCoordinator)
@@ -73,6 +80,7 @@ final class AppCoordinator: BaseCoordinator {
     
     func logout() {
         session.clearAll()
+        UserProfileCache.shared.clear()
         removeAllChildren()
         navigationController.popToRootViewController(animated: false)
     }
@@ -87,10 +95,12 @@ extension AppCoordinator {
         Task {
             do {
                 guard let data = try await DashboardPrefetcher().fetchAll() else {
+                    LoadingIndicator.shared.hide()
                     self.showMainFlow(with: nil)
                     return
                 }
                 await MainActor.run {
+                    LoadingIndicator.shared.hide()
                     self.showMainFlow(with: data)
                 }
             } catch {

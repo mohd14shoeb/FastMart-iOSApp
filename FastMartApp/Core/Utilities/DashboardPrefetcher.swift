@@ -36,6 +36,11 @@ final class DashboardPrefetcher {
         self.userService = userService
     }
 
+    func fetchCacheData() -> DashboardData? {
+        guard let user = UserProfileCache.shared.getUser() else { return nil }
+        return DashboardData(user: user)
+    }
+    
     /// Runs all fetches concurrently. Throws if ANY fail.
     func fetchAll() async throws -> DashboardData? {
         guard let userId = session.userId else {
@@ -47,7 +52,7 @@ final class DashboardPrefetcher {
         do {
             LoadingIndicator.shared.hide()
             let (user) = try await (user)
-            await RawCache.shared.save(user, forKey: "user_profile_response")
+            await  UserProfileCache.shared.saveUser(user) // RawCache.shared.save(user, forKey: "user_profile_response")
           //  logSuccess("Dashboard data pre-fetched — \(user) items, \(user.addresses?.count ?? 0) cart items")
             return DashboardData(user: user)
         } catch {
@@ -56,5 +61,6 @@ final class DashboardPrefetcher {
             throw PrefetchError.failed(error.localizedDescription)
         }
     }
+    
 }
 

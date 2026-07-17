@@ -37,7 +37,7 @@ final class LoginViewModel {
                 loginResponse.dump()
                 
                self.model.isLoading = false
-                LoadingIndicator.shared.hide()
+              //  LoadingIndicator.shared.hide()
                 self.onLoginSuccess?()
             } catch {
                 LoadingIndicator.shared.hide()

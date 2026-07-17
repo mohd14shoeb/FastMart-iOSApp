@@ -36,12 +36,10 @@ final class ProfileViewModel: ObservableObject {
             defer { isLoading = false }
             
             do {
-                let user = try await userService.fetchUser(userId: "1")
+                guard let user = UserProfileCache.shared.getUser() else { return }
                 name = user.name ?? ""
                 email = user.email ?? ""
                 hasLoadedProfile = true
-            } catch {
-                errorMessage = error.localizedDescription
             }
         }
     }
