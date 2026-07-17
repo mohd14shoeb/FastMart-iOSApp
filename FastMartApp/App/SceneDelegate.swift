@@ -34,12 +34,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     private func startApplication(in window: UIWindow) {
-        let navigationController = UINavigationController()
+        // ── Root window ──────────────────────────────────────────────
+        self.window = window
 
-        let coordinator = AppCoordinator(navigationController: navigationController)
+        // ── Navigation root — shared by auth & main flows ───────────
+        let navigationController = UINavigationController()
+        navigationController.setNavigationBarHidden(true, animated: false)
+
         window.rootViewController = navigationController
-        appCoordinator = coordinator
-        coordinator.start()
+        window.makeKeyAndVisible()
+
+        // ── App Coordinator owns the entire navigation tree ─────────
+        appCoordinator = AppCoordinator(navigationController: navigationController)
+        appCoordinator?.start()
     }
     
     private func showSecurityBlockedScreen(in window: UIWindow) {

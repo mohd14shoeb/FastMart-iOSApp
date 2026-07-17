@@ -73,6 +73,7 @@ final class AppCoordinator: BaseCoordinator {
     
     func logout() {
         session.clearAll()
+        removeAllChildren()
         navigationController.popToRootViewController(animated: false)
     }
     
